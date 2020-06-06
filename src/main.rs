@@ -1,6 +1,10 @@
 extern crate clap;
 
+mod code_gen;
+mod enums;
+mod lexer;
 mod memory;
+mod optimizer;
 mod vm;
 
 use clap::{App, Arg};
@@ -20,8 +24,6 @@ fn main() {
         .get_matches();
 
     let file_path = matches.value_of("INPUT").unwrap();
-    println!("Using input file: {}", file_path);
-
     let program = fs::read_to_string(file_path).expect("Couldn't read file");
 
     VM::run(&program).unwrap();

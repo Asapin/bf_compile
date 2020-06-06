@@ -13,40 +13,88 @@ impl Memory {
         }
     }
 
-    pub fn next_cell(&mut self) -> Result<(), Error> {
-        self.pointer += 1;
-        if self.pointer == self.data.len() {
-            self.data.resize(self.data.len() * 2, 0);
+    pub fn inc_mem_pointer_by(&mut self, val: usize) -> Result<(), Error> {
+        self.pointer += val;
+        if self.pointer >= self.data.len() {
+            self.data.resize(self.pointer + 1, 0);
         }
 
         Ok(())
     }
 
-    pub fn prev_cell(&mut self) -> Result<(), Error> {
-        if self.pointer == 0 {
+    pub fn inc_mem_pointer_until_zero_value(&mut self, step: usize) -> Result<(), Error> {
+        while self.pointer < self.data.len() && self.data[self.pointer] != 0 {
+            self.pointer += step;
+        }
+
+        if self.pointer >= self.data.len() {
+            self.data.resize(self.pointer + 1, 0);
+        }
+
+        Ok(())
+    }
+
+    pub fn dec_mem_pointer_by(&mut self, val: usize) -> Result<(), Error> {
+        if val > self.pointer {
             return Err(Error::new(
                 ErrorKind::AddrNotAvailable,
                 "Can't point to an address less than 0",
             ));
         }
 
-        self.pointer -= 1;
+        self.pointer -= val;
         Ok(())
     }
 
-    pub fn inc_value(&mut self) -> Result<(), Error> {
-        self.data[self.pointer] += 1;
-        Ok(())
+    pub fn dec_mem_pointer_until_zero_value(&mut self, step: usize) -> Result<(), Error> {
+        while self.pointer >= step && self.data[self.pointer] != 0 {
+            self.pointer -= step;
+        }
+
+        if self.data[self.pointer] == 0 {
+            Ok(())
+        } else {
+            Err(Error::new(
+                ErrorKind::InvalidInput,
+                "Couldn't find address with 0 value",
+            ))
+        }
     }
 
-    pub fn dec_value(&mut self) -> Result<(), Error> {
-        self.data[self.pointer] -= 1;
-        Ok(())
+    pub fn inc_value_by(&mut self, val: u8) -> Result<(), Error> {
+        if self.pointer < self.data.len() {
+            self.data[self.pointer] += val;
+            Ok(())
+        } else {
+            Err(Error::new(
+                ErrorKind::InvalidData,
+                "Tried to access address greater than available",
+            ))
+        }
     }
 
-    pub fn write_value(&mut self, value: u8) -> Result<(), Error> {
-        self.data[self.pointer] = value;
-        Ok(())
+    pub fn dec_value_by(&mut self, val: u8) -> Result<(), Error> {
+        if self.pointer < self.data.len() {
+            self.data[self.pointer] -= val;
+            Ok(())
+        } else {
+            Err(Error::new(
+                ErrorKind::InvalidData,
+                "Tried to access address greater than available",
+            ))
+        }
+    }
+
+    pub fn write_value(&mut self, val: u8) -> Result<(), Error> {
+        if self.pointer < self.data.len() {
+            self.data[self.pointer] = val;
+            Ok(())
+        } else {
+            Err(Error::new(
+                ErrorKind::InvalidData,
+                "Tried to access address greater than available",
+            ))
+        }
     }
 
     pub fn read_value(&self) -> Result<u8, Error> {

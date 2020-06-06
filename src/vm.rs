@@ -1,99 +1,71 @@
-use crate::memory::Memory;
-use std::{
-    io::{Error, ErrorKind},
-    str::Chars,
+use crate::{
+    code_gen::CodeGen, enums::Command, lexer::Lexer, memory::Memory, optimizer::Optimizer,
 };
+use std::io::Error;
+use std::io::Write;
 use text_io::read;
 
-pub enum Instruction {
-    NextCell,
-    PrevCell,
-    IncVal,
-    DecVal,
-    PrintVal,
-    EnterVal,
-    Loop { instructions: Vec<Instruction> },
-}
-
 pub struct VM {
-    instructions: Vec<Instruction>,
+    commands: Vec<Command>,
     memory: Memory,
 }
 
 impl VM {
     pub fn run(input: &str) -> Result<(), Error> {
-        let mut iter = input.chars();
+        let ir = Lexer::tokenize(input)?;
+        let commands = CodeGen::translate(&ir)?;
+        let optimized_commands = Optimizer::optimize_ir(&commands);
 
-        let instructions = VM::parse(&mut iter, false)?;
         let mut vm = VM {
-            instructions,
+            commands: optimized_commands,
             memory: Memory::new(),
         };
 
-        vm.execute()
+        let stdout = std::io::stdout();
+        let mut stdout = stdout.lock();
+
+        vm.execute(&mut stdout)?;
+
+        Ok(())
     }
 
-    fn parse(iter: &mut Chars, inside_loop: bool) -> Result<Vec<Instruction>, Error> {
-        let mut result = Vec::with_capacity(50);
-
-        while let Some(c) = iter.next() {
-            match c {
-                '>' => result.push(Instruction::NextCell),
-                '<' => result.push(Instruction::PrevCell),
-                '+' => result.push(Instruction::IncVal),
-                '-' => result.push(Instruction::DecVal),
-                '.' => result.push(Instruction::PrintVal),
-                ',' => result.push(Instruction::EnterVal),
-                '[' => {
-                    let inner_loop = VM::parse(iter, true)?;
-                    result.push(Instruction::Loop {
-                        instructions: inner_loop,
-                    });
-                }
-                ']' => {
-                    if inside_loop {
-                        return Ok(result);
-                    } else {
-                        return Err(Error::new(ErrorKind::InvalidInput, "Unmatched ']'"));
-                    }
-                }
-                _ => {
-                    // skip
-                }
-            }
-        }
-
-        if inside_loop {
-            Err(Error::new(ErrorKind::InvalidInput, "Unmatched '['"))
-        } else {
-            Ok(result)
-        }
+    fn execute(&mut self, stdout: &mut std::io::StdoutLock) -> Result<(), Error> {
+        VM::execute_commands(&self.commands, &mut self.memory, stdout)
     }
 
-    fn execute(&mut self) -> Result<(), Error> {
-        VM::run_instructions(&self.instructions, &mut self.memory)
-    }
-
-    fn run_instructions(instructions: &[Instruction], memory: &mut Memory) -> Result<(), Error> {
-        for instruction in instructions.iter() {
-            match instruction {
-                Instruction::NextCell => memory.next_cell()?,
-                Instruction::PrevCell => memory.prev_cell()?,
-                Instruction::IncVal => memory.inc_value()?,
-                Instruction::DecVal => memory.dec_value()?,
-                Instruction::PrintVal => {
+    fn execute_commands(
+        commands: &[Command],
+        memory: &mut Memory,
+        stdout: &mut std::io::StdoutLock,
+    ) -> Result<(), Error> {
+        for command in commands.iter() {
+            match command {
+                Command::IncMemPointerByN { n } => memory.inc_mem_pointer_by(*n)?,
+                Command::DecMemPointerByN { n } => memory.dec_mem_pointer_by(*n)?,
+                Command::IncValByN { n } => memory.inc_value_by(*n)?,
+                Command::DecValByN { n } => memory.dec_value_by(*n)?,
+                Command::PrintVal => {
                     let value = memory.read_value()? as char;
-                    print!("{}", value);
+                    write!(stdout, "{}", value)?;
                 }
-                Instruction::EnterVal => {
+                Command::EnterVal => {
                     let value = read!();
                     memory.write_value(value)?;
                 }
-                Instruction::Loop { instructions } => {
+                Command::Loop {
+                    commands: loop_commands,
+                } => {
                     let start_flag = memory.read_value()?;
                     if start_flag != 0 {
-                        VM::run_loop(instructions, memory)?;
+                        VM::run_loop(loop_commands, memory, stdout)?;
                     }
+                }
+                Command::SetZero => memory.write_value(0)?,
+                Command::FirstZeroByStep { step } => {
+                    memory.inc_mem_pointer_until_zero_value(*step)?
+                }
+                Command::FirstZeroByStepReverse { step } => {
+                    memory.dec_mem_pointer_until_zero_value(*step)?
                 }
             }
         }
@@ -101,12 +73,16 @@ impl VM {
         Ok(())
     }
 
-    fn run_loop(instructions: &[Instruction], memory: &mut Memory) -> Result<(), Error> {
-        VM::run_instructions(instructions, memory)?;
+    fn run_loop(
+        commands: &[Command],
+        memory: &mut Memory,
+        stdout: &mut std::io::StdoutLock,
+    ) -> Result<(), Error> {
+        VM::execute_commands(commands, memory, stdout)?;
 
         let end_flag = memory.read_value()?;
         if end_flag != 0 {
-            VM::run_loop(instructions, memory)?;
+            VM::run_loop(commands, memory, stdout)?;
         }
 
         Ok(())
