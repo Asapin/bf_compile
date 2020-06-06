@@ -1,14 +1,14 @@
 use std::io::{Error, ErrorKind};
 
 pub struct Memory {
-    data: Vec<isize>,
+    data: Vec<u8>,
     pointer: usize,
 }
 
 impl Memory {
     pub fn new() -> Memory {
         Memory {
-            data: vec![0; 1000],
+            data: vec![0; 30_000],
             pointer: 0,
         }
     }
@@ -44,12 +44,12 @@ impl Memory {
         Ok(())
     }
 
-    pub fn write_value(&mut self, value: isize) -> Result<(), Error> {
+    pub fn write_value(&mut self, value: u8) -> Result<(), Error> {
         self.data[self.pointer] = value;
         Ok(())
     }
 
-    pub fn read_value(&self) -> Result<isize, Error> {
+    pub fn read_value(&self) -> Result<u8, Error> {
         Ok(self.data[self.pointer])
     }
 }

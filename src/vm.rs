@@ -1,5 +1,8 @@
 use crate::memory::Memory;
-use std::io::Error;
+use std::{
+    io::{Error, ErrorKind},
+    str::Chars,
+};
 use text_io::read;
 
 pub enum Instruction {
@@ -8,25 +11,67 @@ pub enum Instruction {
     IncVal,
     DecVal,
     PrintVal,
-    ReadVal,
+    EnterVal,
     Loop { instructions: Vec<Instruction> },
 }
 
-pub struct Machine {
+pub struct VM {
     instructions: Vec<Instruction>,
     memory: Memory,
 }
 
-impl Machine {
-    pub fn new(instructions: Vec<Instruction>) -> Machine {
-        Machine {
+impl VM {
+    pub fn run(input: &str) -> Result<(), Error> {
+        let mut iter = input.chars();
+
+        let instructions = VM::parse(&mut iter, false)?;
+        let mut vm = VM {
             instructions,
             memory: Memory::new(),
+        };
+
+        vm.execute()
+    }
+
+    fn parse(iter: &mut Chars, inside_loop: bool) -> Result<Vec<Instruction>, Error> {
+        let mut result = Vec::with_capacity(50);
+
+        while let Some(c) = iter.next() {
+            match c {
+                '>' => result.push(Instruction::NextCell),
+                '<' => result.push(Instruction::PrevCell),
+                '+' => result.push(Instruction::IncVal),
+                '-' => result.push(Instruction::DecVal),
+                '.' => result.push(Instruction::PrintVal),
+                ',' => result.push(Instruction::EnterVal),
+                '[' => {
+                    let inner_loop = VM::parse(iter, true)?;
+                    result.push(Instruction::Loop {
+                        instructions: inner_loop,
+                    });
+                }
+                ']' => {
+                    if inside_loop {
+                        return Ok(result);
+                    } else {
+                        return Err(Error::new(ErrorKind::InvalidInput, "Unmatched ']'"));
+                    }
+                }
+                _ => {
+                    // skip
+                }
+            }
+        }
+
+        if inside_loop {
+            Err(Error::new(ErrorKind::InvalidInput, "Unmatched '['"))
+        } else {
+            Ok(result)
         }
     }
 
-    pub fn run(&mut self) -> Result<(), Error> {
-        Machine::run_instructions(&self.instructions, &mut self.memory)
+    fn execute(&mut self) -> Result<(), Error> {
+        VM::run_instructions(&self.instructions, &mut self.memory)
     }
 
     fn run_instructions(instructions: &[Instruction], memory: &mut Memory) -> Result<(), Error> {
@@ -37,17 +82,17 @@ impl Machine {
                 Instruction::IncVal => memory.inc_value()?,
                 Instruction::DecVal => memory.dec_value()?,
                 Instruction::PrintVal => {
-                    let value = memory.read_value()?;
+                    let value = memory.read_value()? as char;
                     print!("{}", value);
                 }
-                Instruction::ReadVal => {
+                Instruction::EnterVal => {
                     let value = read!();
                     memory.write_value(value)?;
                 }
                 Instruction::Loop { instructions } => {
                     let start_flag = memory.read_value()?;
                     if start_flag != 0 {
-                        Machine::run_loop(instructions, memory)?;
+                        VM::run_loop(instructions, memory)?;
                     }
                 }
             }
@@ -57,11 +102,11 @@ impl Machine {
     }
 
     fn run_loop(instructions: &[Instruction], memory: &mut Memory) -> Result<(), Error> {
-        Machine::run_instructions(instructions, memory)?;
+        VM::run_instructions(instructions, memory)?;
 
         let end_flag = memory.read_value()?;
         if end_flag != 0 {
-            Machine::run_loop(instructions, memory)?;
+            VM::run_loop(instructions, memory)?;
         }
 
         Ok(())
