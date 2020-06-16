@@ -2,7 +2,6 @@ use crate::{
     code_gen::CodeGen, enums::Command, lexer::Lexer, memory::Memory, optimizer::Optimizer,
 };
 use std::io::Error;
-use text_io::read;
 
 pub struct VM {
     commands: Vec<Command>,
@@ -45,10 +44,6 @@ impl VM {
                 Command::PrintVal => {
                     let value = memory.read_value()? as char;
                     result.push(value);
-                }
-                Command::EnterVal => {
-                    let value = read!();
-                    memory.write_value(value)?;
                 }
                 Command::Loop {
                     commands: loop_commands,

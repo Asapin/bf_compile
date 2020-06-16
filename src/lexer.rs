@@ -22,7 +22,6 @@ impl Lexer {
                 '+' => result.push(IrCommand::IncVal),
                 '-' => result.push(IrCommand::DecVal),
                 '.' => result.push(IrCommand::PrintVal),
-                ',' => result.push(IrCommand::EnterVal),
                 '[' => {
                     let inner_loop = Lexer::do_tokenization(iter, true)?;
                     result.push(IrCommand::Loop {

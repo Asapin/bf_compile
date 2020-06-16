@@ -18,13 +18,6 @@ impl CodeGen {
                     prev_token = Option::None;
                     seq_length = 0;
                 }
-                IrCommand::EnterVal => {
-                    CodeGen::finish_sequence(&mut prev_token, seq_length, &mut result)?;
-                    result.push(Command::EnterVal);
-
-                    prev_token = Option::None;
-                    seq_length = 0;
-                }
                 IrCommand::Loop { commands } => {
                     CodeGen::finish_sequence(&mut prev_token, seq_length, &mut result)?;
                     result.push(Command::Loop {

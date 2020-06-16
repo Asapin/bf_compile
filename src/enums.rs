@@ -5,7 +5,6 @@ pub enum IrCommand {
     IncVal,
     DecVal,
     PrintVal,
-    EnterVal,
     Loop { commands: Vec<IrCommand> },
 }
 
@@ -16,7 +15,6 @@ pub enum Command {
     IncValByN { n: u8 },
     DecValByN { n: u8 },
     PrintVal,
-    EnterVal,
     Loop { commands: Vec<Command> },
     SetZero,
     FirstZeroByStep { step: usize },
