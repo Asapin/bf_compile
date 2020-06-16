@@ -26,5 +26,6 @@ fn main() {
     let file_path = matches.value_of("INPUT").unwrap();
     let program = fs::read_to_string(file_path).expect("Couldn't read file");
 
-    VM::run(&program).unwrap();
+    let result = VM::run(&program).unwrap();
+    println!("{}", result);
 }

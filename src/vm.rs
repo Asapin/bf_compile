@@ -2,7 +2,6 @@ use crate::{
     code_gen::CodeGen, enums::Command, lexer::Lexer, memory::Memory, optimizer::Optimizer,
 };
 use std::io::Error;
-use std::io::Write;
 use text_io::read;
 
 pub struct VM {
@@ -11,7 +10,7 @@ pub struct VM {
 }
 
 impl VM {
-    pub fn run(input: &str) -> Result<(), Error> {
+    pub fn run(input: &str) -> Result<String, Error> {
         let ir = Lexer::tokenize(input)?;
         let commands = CodeGen::translate(&ir)?;
         let optimized_commands = Optimizer::optimize_ir(&commands);
@@ -21,22 +20,21 @@ impl VM {
             memory: Memory::new(),
         };
 
-        let stdout = std::io::stdout();
-        let mut stdout = stdout.lock();
+        let mut result = String::with_capacity(100);
 
-        vm.execute(&mut stdout)?;
+        vm.execute(&mut result)?;
 
-        Ok(())
+        Ok(result)
     }
 
-    fn execute(&mut self, stdout: &mut std::io::StdoutLock) -> Result<(), Error> {
-        VM::execute_commands(&self.commands, &mut self.memory, stdout)
+    fn execute(&mut self, result: &mut String) -> Result<(), Error> {
+        VM::execute_commands(&self.commands, &mut self.memory, result)
     }
 
     fn execute_commands(
         commands: &[Command],
         memory: &mut Memory,
-        stdout: &mut std::io::StdoutLock,
+        result: &mut String,
     ) -> Result<(), Error> {
         for command in commands.iter() {
             match command {
@@ -46,7 +44,7 @@ impl VM {
                 Command::DecValByN { n } => memory.dec_value_by(*n)?,
                 Command::PrintVal => {
                     let value = memory.read_value()? as char;
-                    write!(stdout, "{}", value)?;
+                    result.push(value);
                 }
                 Command::EnterVal => {
                     let value = read!();
@@ -57,7 +55,7 @@ impl VM {
                 } => {
                     let start_flag = memory.read_value()?;
                     if start_flag != 0 {
-                        VM::run_loop(loop_commands, memory, stdout)?;
+                        VM::run_loop(loop_commands, memory, result)?;
                     }
                 }
                 Command::SetZero => memory.write_value(0)?,
@@ -76,13 +74,13 @@ impl VM {
     fn run_loop(
         commands: &[Command],
         memory: &mut Memory,
-        stdout: &mut std::io::StdoutLock,
+        result: &mut String,
     ) -> Result<(), Error> {
-        VM::execute_commands(commands, memory, stdout)?;
+        VM::execute_commands(commands, memory, result)?;
 
         let end_flag = memory.read_value()?;
         if end_flag != 0 {
-            VM::run_loop(commands, memory, stdout)?;
+            VM::run_loop(commands, memory, result)?;
         }
 
         Ok(())
