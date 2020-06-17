@@ -24,8 +24,13 @@ dependencies = [
 name = "bf"
 version = "0.1.0"
 dependencies = [
+ "bf-interpreter",
  "clap",
 ]
+
+[[package]]
+name = "bf-interpreter"
+version = "0.1.0"
 
 [[package]]
 name = "bitflags"

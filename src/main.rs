@@ -1,15 +1,9 @@
+extern crate bf_interpreter;
 extern crate clap;
 
-mod code_gen;
-mod enums;
-mod lexer;
-mod memory;
-mod optimizer;
-mod vm;
-
+use bf_interpreter::vm::VM;
 use clap::{App, Arg};
 use std::fs;
-use vm::VM;
 
 fn main() {
     let matches = App::new("Brainfuck interpreter")
