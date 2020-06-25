@@ -2,9 +2,9 @@
 Learning Rust by writing optimizing Brainfuck interpreter first and then trying to rewrite it as a compile-time interpreter.
 
 ## Optimizing interpreter
-Optimizing interpreter works by parsing source code into a vector of [IrCommand](./src/enums.rs) and then converting it into a vector of [Command](./src/enums.rs),
-while applying different optimizations to make code more compact and faster.
-As it is not possible to read user input during compilation, `,` in BF programs (reading user input) is ignored.
+Optimizing interpreter works by parsing source code into a vector of [IrCommand](./src/enums.rs) first, and then by converting it into a vector of [Command](./src/enums.rs),
+while applying different optimizations to make resulting code more compact and faster.
+Also, as it is not possible to read user input during compilation, `,` in BF programs (reading user input) is ignored, which means that not all BF programs are supported.
 
 ### Supported optimizations
 * Replacing arbitrary number of `>` with `move pointer n cells forward`
