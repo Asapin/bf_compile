@@ -51,3 +51,7 @@ fn main() {
 ```
 
 Resulting source code is available in the `lib.rs` branch
+
+#### Build time
+
+Using the same Mandelbrot program as before, clean build time is increased up to 24.23 seconds.
