@@ -63,7 +63,8 @@ impl Memory {
 
     pub fn inc_value_by(&mut self, val: u8) -> Result<(), Error> {
         if self.pointer < self.data.len() {
-            self.data[self.pointer] += val;
+            let (new_value, _) = self.data[self.pointer].overflowing_add(val);
+            self.data[self.pointer] = new_value;
             Ok(())
         } else {
             Err(Error::new(
@@ -75,7 +76,8 @@ impl Memory {
 
     pub fn dec_value_by(&mut self, val: u8) -> Result<(), Error> {
         if self.pointer < self.data.len() {
-            self.data[self.pointer] -= val;
+            let (new_value, _) = self.data[self.pointer].overflowing_sub(val);
+            self.data[self.pointer] = new_value;
             Ok(())
         } else {
             Err(Error::new(

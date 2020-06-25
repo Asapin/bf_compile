@@ -8,7 +8,7 @@ pub enum IrCommand {
     Loop { commands: Vec<IrCommand> },
 }
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Clone)]
 pub enum Command {
     IncMemPointerByN { n: usize },
     DecMemPointerByN { n: usize },

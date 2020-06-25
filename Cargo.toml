@@ -5,14 +5,11 @@ authors = ["Vladimir Kuzmin <1559761+Asapin@users.noreply.github.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[build-dependencies]
+bf-interpreter = { path = "./lib/interpreter" }
 
-[dependencies]
-clap = "2.33.1"
-
-[dependencies.bf-interpreter]
-path = "lib/interpreter"
-
-[workspace]
-members = [
-  "lib/interpreter",
-]
+[profile.release]
+opt-level = 'z'
+lto = true
+codegen-units = 1
+panic = 'abort'
